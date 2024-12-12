@@ -2,7 +2,10 @@
 
 package tmc5160
 
-import "machine"
+import (
+	"github.com/orsinium-labs/tinymath"
+	"machine"
+)
 
 type Driver struct {
 	comm      RegisterComm
@@ -125,7 +128,7 @@ func (driver *Driver) Begin(powerParams PowerStageParameters, motorParams MotorP
 	}
 
 	// Set default start, stop, threshold speeds
-	setRampSpeeds(0.0, 0.1, 0.0) // Start, stop, threshold speeds
+	driver.setRampSpeeds(0.0, 0.1, 0.0) // Start, stop, threshold speeds
 
 	// Set default D1 (must not be = 0 in positioning mode even with V1=0)
 	err = driver.WriteRegister(D_1, 100)
@@ -134,6 +137,22 @@ func (driver *Driver) Begin(powerParams PowerStageParameters, motorParams MotorP
 	}
 
 	return false
+}
+func (driver *Driver) setRampSpeeds(startSpeed float32, stopSpeed float32, transitionSpeed float32) {
+	str := driver.stepper.DesiredSpeedToTSTEP(uint32(startSpeed))
+	stp := driver.stepper.DesiredSpeedToTSTEP(uint32(stopSpeed))
+	ts := driver.stepper.DesiredSpeedToTSTEP(uint32(transitionSpeed))
+	driver.WriteRegister(VSTART, uint32(tinymath.Min(0x3FFFF, float32(str))))
+	driver.WriteRegister(VSTOP, uint32(tinymath.Min(0x3FFFF, float32(stp))))
+	driver.WriteRegister(V_1, uint32(tinymath.Min(0xFFFFF, float32(ts))))
+	println("Ramp set to: startSpeed:", startSpeed, "stopSpeed:", stopSpeed, "transitionSpeed:", transitionSpeed)
+}
+
+// setMaxSpeed sets the maximum speed to 0 (placeholder function)
+func setMaxSpeed(speed uint32) {
+	// This is a placeholder function that sets the speed
+	// Implement the actual logic to set the maximum speed register value
+	println("Max Speed set to:", speed)
 }
 
 // Dump_TMC reads multiple registers from the Driver and logs their values with their names.
