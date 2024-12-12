@@ -26,13 +26,9 @@ To use the TMC5160 driver, you'll need to have **TinyGo** installed. You can ins
 Add the module
 
 ```bash
-go get github.com/amken3d/tinygo_tmc5160/tmc5160
-```
-Alternate method is to use the tinygo official drivers repo
-
-```aiignore
 import "tinygo.org/x/drivers/tmc5160"
 ```
+
 ### Communication Modes
 
 The TMC5160 supports two communication modes for controlling the motor:
@@ -97,50 +93,71 @@ driver.WriteRegister(tmc5160.GCONF, 0x01)
 Here’s a simple example of how to use the TMC5160 driver with SPI and UART modes:
 
 ```aiignore
+// Connects to SPI1 on a RP2040 (Pico)
 package main
 
 import (
-    "fmt"
-    "machine"
-    "time"
-    "tmc5160"
+	"machine"
+
+	"tinygo.org/x/drivers/tmc5160"
 )
 
 func main() {
-    // SPI setup
-    spi := machine.SPI1
-    csPin := machine.GPIO13
-    spi.Configure(machine.SPIConfig{
-        SCK:       machine.GPIO10,
-        SDI:       machine.GPIO11,
-        SDO:       machine.GPIO12,
-        Frequency: 5000000,
-        Mode:      3,
-        LSBFirst:  false,
-    })
+	// Step 1. Setup your protocol.  SPI setup shown below
+	spi := machine.SPI1
+	spi.Configure(machine.SPIConfig{
+		SCK:       machine.GPIO10,
+		SDI:       machine.GPIO11,
+		SDO:       machine.GPIO12,
+		Frequency: 12000000, // Upto 12 MHZ is pretty stable. Reduce to 5 or 6 Mhz if you are experiencing issues
+		Mode:      3,
+		LSBFirst:  false,
+	})
+	// Step 2. Set up all associated Pins
+	csPin0 := machine.GPIO13
+	csPin0.Configure(machine.PinConfig{Mode: machine.PinOutput})
+	enn0 := machine.GPIO18
+	enn0.Configure(machine.PinConfig{Mode: machine.PinOutput})
 
-    csPin.Configure(machine.PinConfig{Mode: machine.PinOutput})
-    csPins := map[uint8]machine.Pin{0: csPin}
+	// csPins is a map of all chip select pins in a multi driver setup.
+	//Only one pin csPin0 mapped to "0"is shown in this example, but add more mappings as required
+	csPins := map[uint8]machine.Pin{0: csPin0}
+	//bind csPin to driverAdddress
+	driverAddress := uint8(0) // Let's assume we are working with driver at address 0x01
+	// Step 3. Bind the communication interface to the protocol
+	comm := tmc5160.NewSPIComm(*spi, csPins)
+	// Step 4. Define your stepper like this below
+	//stepper := tmc5160.NewStepper(angle , gearRatio  vSupply  rCoil , lCoil , iPeak , rSense , mSteps, fclk )
+	stepper := tmc5160.NewDefaultStepper() // Default Stepper should be used only for testing.
+	// Step 5. Instantiate your driver
+	driver := tmc5160.NewDriver(
+		comm,
+		driverAddress,
+		enn0,
+		stepper)
 
-    comm := tmc5160.NewSPIComm(*spi, csPins)
-    driver := tmc5160.NewTMC5160(comm, 0)
+	// Setting and getting mode
+	rampMode := tmc5160.NewRAMPMODE(comm, driverAddress)
+	err := rampMode.SetMode(tmc5160.PositioningMode)
+	if err != nil {
+		return
+	}
+	mode, err := rampMode.GetMode()
+	if err != nil {
+		println("Error getting mode:", err)
+	} else {
+		println("Current Mode:", mode)
+	}
 
-    // Setting and getting mode
-    rampMode := tmc5160.NewRAMPMODE(comm)
-    rampMode.SetMode(tmc5160.PositioningMode)
-    mode, err := rampMode.GetMode()
-    if err != nil {
-        fmt.Println("Error getting mode:", err)
-    } else {
-        fmt.Println("Current Mode:", mode)
-    }
-
-    // Read GCONF register
-    GCONF := tmc5160.NewGCONF()
-    gconfVal, err := driver.ReadRegister(tmc5160.GCONF)
-    GCONF.Unpack(gconfVal)
-    fmt.Println("GCONF:", GCONF)
+	// Read GCONF register
+	GCONF := tmc5160.NewGCONF()
+	gconfVal, err := driver.ReadRegister(tmc5160.GCONF)
+	// Uppack the register to get all the bits and bytes of the register
+	GCONF.Unpack(gconfVal)
+	//E.g. MultiStepFlit is retrieved from the GCONF register
+	println("GCONF:MultiStepFlit:", GCONF.MultistepFilt)
 }
+
 
 ```
 ## Reading and Writing Registers
@@ -188,14 +205,7 @@ Reads a value from the specified register.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License 
 
 
-### Key Sections:
 
-1. **Installation**: Explains how to install TinyGo and clone the repository.
-2. **Communication Modes**: Describes how to set up SPI and UART communication with the TMC5160.
-3. **Usage Example**: Provides an example of how to use the driver, including how to set modes and read/write registers.
-4. **API Reference**: Lists functions available in the TMC5160 driver, such as `WriteRegister`, `ReadRegister`, and constructors like `NewSPIComm`.
-
-This README provides a comprehensive overview and guide on how to use the TMC5160 driver in both SPI and UART communication modes.

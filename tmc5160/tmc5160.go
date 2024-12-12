@@ -115,10 +115,7 @@ func (driver *Driver) Begin(powerParams PowerStageParameters, motorParams MotorP
 		return false
 	}
 	rampMode := NewRAMPMODE(driver.comm, driver.address)
-	// Use position mode
 	rampMode.SetMode(PositioningMode)
-
-	// Set StealthChop PWM mode and shaft direction
 	gconf := NewGCONF()
 	gconf.EnPwmMode = true // Enable stealthChop PWM mode
 	gconf.Shaft = stepperDirection == Clockwise
@@ -139,17 +136,6 @@ func (driver *Driver) Begin(powerParams PowerStageParameters, motorParams MotorP
 	return false
 }
 
-func setRampSpeeds(startSpeed float32, stopSpeed float32, transitionSpeed float32) {
-	//TODO
-	println("Ramp set to: startSpeed:", startSpeed, "stopSpeed:", stopSpeed, "transitionSpeed:", transitionSpeed)
-}
-
-// setMaxSpeed sets the maximum speed to 0 (placeholder function)
-func setMaxSpeed(speed uint32) {
-	// This is a placeholder function that sets the speed
-	// Implement the actual logic to set the maximum speed register value
-	println("Max Speed set to:", speed)
-}
 
 // Dump_TMC reads multiple registers from the Driver and logs their values with their names.
 func (driver *Driver) Dump_TMC() error {
@@ -157,7 +143,6 @@ func (driver *Driver) Dump_TMC() error {
 		GCONF, CHOPCONF, GSTAT, DRV_STATUS, FACTORY_CONF, IOIN, LOST_STEPS, MSCNT,
 		MSCURACT, OTP_READ, PWM_SCALE, PWM_AUTO, TSTEP,
 	}
-	// Map register address to their names
 	registerNames := map[uint8]string{
 		GCONF:        "GCONF",
 		CHOPCONF:     "CHOPCONF",
@@ -173,20 +158,17 @@ func (driver *Driver) Dump_TMC() error {
 		PWM_AUTO:     "PWM_AUTO",
 		TSTEP:        "TSTEP",
 	}
-	// Loop through the register list and read each register
 	for _, reg := range registers {
 		// Fetch the register name from the map
 		regName, exists := registerNames[reg]
 		if !exists {
 			regName = "Unknown Register"
 		}
-		//println("Reading reg:", regName)
 		val, err := driver.ReadRegister(reg)
 		if err != nil {
 			println("Error reading register", regName, err)
 			return err
 		}
-		// Log the value in the desired format
 		println("Register", regName, "Value:", val)
 	}
 
