@@ -136,7 +136,6 @@ func (driver *Driver) Begin(powerParams PowerStageParameters, motorParams MotorP
 	return false
 }
 
-
 // Dump_TMC reads multiple registers from the Driver and logs their values with their names.
 func (driver *Driver) Dump_TMC() error {
 	registers := []uint8{

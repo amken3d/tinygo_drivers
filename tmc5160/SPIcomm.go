@@ -126,7 +126,7 @@ func spiTransfer40(spi *machine.SPI, register uint8, txData uint32) (uint32, err
 	if err != nil {
 		return 0, err
 	}
-	
+
 	// Combine the received bytes into a 32-bit response, ignore the address byte
 	rxData := uint32(rx[1])<<24 | uint32(rx[2])<<16 | uint32(rx[3])<<8 | uint32(rx[4])
 
