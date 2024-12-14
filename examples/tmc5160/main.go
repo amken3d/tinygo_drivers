@@ -11,9 +11,6 @@ func main() {
 	// Step 1. Setup your protocol.  SPI setup shown below
 	spi := machine.SPI1
 	spi.Configure(machine.SPIConfig{
-		SCK:       machine.GPIO10,
-		SDI:       machine.GPIO11,
-		SDO:       machine.GPIO12,
 		Frequency: 12000000, // Upto 12 MHZ is pretty stable. Reduce to 5 or 6 Mhz if you are experiencing issues
 		Mode:      3,
 		LSBFirst:  false,
