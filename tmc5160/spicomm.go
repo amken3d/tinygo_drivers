@@ -118,7 +118,7 @@ func spiTransfer40(spi *machine.SPI, register uint8, txData uint32) (uint32, err
 		byte(txData >> 8),  // Next 8 bits of data
 		byte(txData),       // Lower 8 bits of data
 	}
-	//println("Sending", tx[0], tx[1], tx[2], tx[3], tx[4])
+
 	rx := make([]byte, 5)
 
 	// Perform the SPI transaction
