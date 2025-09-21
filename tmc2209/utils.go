@@ -4,16 +4,24 @@ import "log"
 
 func CalculateCRC(data []byte) uint8 {
 	crc := uint8(0)
-	for _, byte := range data {
+
+	// MSB-first CRC-8 with polynomial 0x07, initial value 0x00
+	for _, b := range data {
+		crc ^= b
 		for i := 0; i < 8; i++ {
-			if (crc>>7)^(byte&0x01) == 1 {
+			if (crc & 0x80) != 0 {
 				crc = (crc << 1) ^ 0x07
 			} else {
-				crc = crc << 1
+				crc <<= 1
 			}
-			byte >>= 1
 		}
 	}
+
+	// Bit-reverse final CRC (matches reference implementation)
+	crc = ((crc >> 1) & 0x55) | ((crc & 0x55) << 1) // swap odd/even bits
+	crc = ((crc >> 2) & 0x33) | ((crc & 0x33) << 2) // swap consecutive pairs
+	crc = ((crc >> 4) & 0x0F) | ((crc & 0x0F) << 4) // swap nibbles
+
 	return crc
 }
 
