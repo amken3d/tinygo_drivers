@@ -83,7 +83,7 @@ func (comm *UARTComm) WriteRegister(register uint8, value uint32, driverIndex ui
 func (comm *UARTComm) ReadRegister(register uint8, driverIndex uint8) (uint32, error) {
 	var writeBuffer [4]byte
 	writeBuffer[0] = 0x05            // Sync byte
-	writeBuffer[1] = 0x00            // Slave address
+	writeBuffer[1] = comm.address    // Slave address
 	writeBuffer[2] = register & 0x7F // Read command (MSB clear for read)
 	writeBuffer[3] = CalculateCRC(writeBuffer[:3])
 
